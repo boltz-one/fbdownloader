@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Tải chất lượng tối đa — FB Video Downloader</title>
+<link rel="stylesheet" href="downloader.css">
+</head>
+<body>
+<main>
+  <h1><img src="../icons/icon32.png" alt=""> Tải chất lượng tối đa</h1>
+  <p class="lead" id="lead">Đang đọc thông tin video…</p>
+
+  <section id="pick" hidden>
+    <div class="field">
+      <label for="vsel">Luồng hình</label>
+      <select id="vsel"></select>
+    </div>
+    <div class="field">
+      <label for="asel">Luồng tiếng</label>
+      <select id="asel"></select>
+    </div>
+    <div class="field">
+      <label for="msel">Xử lý</label>
+      <select id="msel">
+        <option value="copy">Giữ nguyên codec — ghép thẳng, xong trong vài giây</option>
+        <option value="h264">Chuyển sang H.264 — mở được ở mọi trình phát, mất vài phút</option>
+      </select>
+    </div>
+    <p class="warn" id="codecWarn" hidden></p>
+    <button id="go" class="primary">Tải &amp; ghép thành MP4</button>
+    <p class="note">Video và tiếng được Facebook phát riêng ở chế độ DASH. Extension tải cả hai rồi ghép lại
+      ngay trong trình duyệt bằng ffmpeg — không có dữ liệu nào rời khỏi máy bạn.</p>
+  </section>
+
+  <section id="work" hidden>
+    <div class="step" id="s-video"><span class="lbl">Tải hình</span><div class="bar"><i></i></div><span class="pct">0%</span></div>
+    <div class="step" id="s-audio"><span class="lbl">Tải tiếng</span><div class="bar"><i></i></div><span class="pct">0%</span></div>
+    <div class="step" id="s-mux"><span class="lbl">Ghép MP4</span><div class="bar"><i></i></div><span class="pct">0%</span></div>
+    <pre id="log"></pre>
+  </section>
+
+  <section id="done" hidden>
+    <p class="ok">✅ Xong! File đã được tải xuống.</p>
+    <button id="again" class="ghost">Tải luồng khác</button>
+  </section>
+
+  <section id="fail" hidden>
+    <p class="err" id="errmsg"></p>
+    <div class="row">
+      <button id="rawv" class="ghost">Tải riêng file hình</button>
+      <button id="rawa" class="ghost">Tải riêng file tiếng</button>
+    </div>
+  </section>
+</main>
+<script type="module" src="downloader.js"></script>
+</body>
+</html>

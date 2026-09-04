@@ -1,0 +1,47 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh; background: #18191a; color: #e4e6eb;
+  font: 14px/1.5 -apple-system, "Segoe UI", Roboto, sans-serif;
+  display: flex; justify-content: center; padding: 48px 20px;
+}
+main { width: 100%; max-width: 620px; }
+h1 { display: flex; align-items: center; gap: 10px; font-size: 20px; margin: 0 0 6px; }
+h1 img { width: 26px; height: 26px; border-radius: 7px; }
+.lead { opacity: .6; margin: 0 0 24px; }
+.field { margin-bottom: 14px; }
+label { display: block; font-size: 12px; opacity: .6; margin-bottom: 5px; }
+select {
+  width: 100%; padding: 10px 12px; border-radius: 9px;
+  background: #242526; color: #e4e6eb; border: 1px solid #3a3b3c; font: inherit;
+}
+button {
+  border: 0; border-radius: 9px; padding: 11px 18px; font: 600 14px/1 inherit; cursor: pointer;
+}
+button.primary { background: #1877f2; color: #fff; margin-top: 6px; }
+button.primary:hover { background: #3b8bf5; }
+button.primary:disabled { background: #3a3b3c; color: #888; cursor: default; }
+button.ghost { background: #303235; color: #e4e6eb; }
+button.ghost:hover { background: #3a3d41; }
+.note { font-size: 12px; opacity: .45; margin-top: 16px; }
+.row { display: flex; gap: 10px; margin-top: 12px; }
+.step { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.step .lbl { width: 82px; font-size: 13px; opacity: .75; }
+.step .pct { width: 48px; text-align: right; font-variant-numeric: tabular-nums; font-size: 12px; opacity: .6; }
+.bar { flex: 1; height: 7px; border-radius: 99px; background: #303235; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: #1877f2; transition: width .18s; }
+.step.done .bar i { background: #31a24c; }
+pre#log {
+  margin-top: 18px; max-height: 190px; overflow: auto; padding: 12px;
+  background: #101112; border: 1px solid #2a2b2c; border-radius: 9px;
+  font-size: 11px; line-height: 1.45; color: #8f949b; white-space: pre-wrap;
+}
+.ok { color: #4fd07a; font-size: 16px; font-weight: 600; }
+.err { color: #ff6b6b; }
+
+.warn {
+  margin: 4px 0 14px; padding: 11px 13px; border-radius: 9px;
+  background: rgba(255, 190, 60, .09); border: 1px solid rgba(255, 190, 60, .28);
+  color: #ffd18a; font-size: 12.5px; line-height: 1.5;
+}
+optgroup { color: #9aa0a6; font-style: normal; }
+optgroup option { color: #e4e6eb; }

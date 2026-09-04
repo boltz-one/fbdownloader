@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="popup.css">
+<title>FB Video Downloader</title>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <img src="../icons/icon32.png" alt="">
+      <div>
+        <strong>FB Video Downloader</strong>
+        <span id="sub">Đang quét…</span>
+      </div>
+    </div>
+    <button id="refresh" title="Quét lại">⟳</button>
+  </header>
+
+  <div id="list"></div>
+
+  <div id="empty" class="empty" hidden>
+    <p><b>Chưa bắt được video nào.</b></p>
+    <p>Mở một video / Reel trên Facebook, bấm <b>play</b> cho nó chạy vài giây, rồi bấm ⟳.</p>
+  </div>
+
+  <footer>Chỉ tải nội dung bạn có quyền sử dụng.</footer>
+  <script src="popup.js"></script>
+</body>
+</html>

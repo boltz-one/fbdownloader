@@ -1,0 +1,3 @@
+/* Reserved: the button lives in a shadow root, so nothing here can be
+   overridden by Facebook's stylesheets. Kept for future non-shadow UI. */
+#__fbvd_host { all: initial; }
