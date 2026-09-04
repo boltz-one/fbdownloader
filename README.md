@@ -120,3 +120,33 @@ sau khi chạy xong; nay được ghi lại thành "(ffmpeg thoát — bình th�
 
 **Mẹo:** bản progressive HD của Facebook luôn là H.264 + AAC (đã kiểm chứng: `avc1`/`mp4a`),
 nên nếu chỉ cần file mở được ngay ở mọi máy thì nút **HD** trong popup là nhanh nhất.
+
+### 1.1.0 — chuyển mã bằng WebCodecs thay vì ffmpeg
+Bản 1.0.3 thêm chế độ chuyển sang H.264 dùng `libx264` trong ffmpeg.wasm. Với VP9 thì chạy được,
+nhưng với AV1 thì hỏng hoàn toàn:
+
+```
+[av1] Your platform doesn't support hardware accelerated AV1 decoding.
+[av1] Failed to get pixel format / Missing Sequence Header
+Error while decoding stream #0:0: Function not implemented
+```
+
+Nguyên nhân: `@ffmpeg/core` được build với `--enable-libvpx --enable-libx264 --enable-libx265`
+nhưng **không có `libdav1d` cũng không có `libaom`**. Decoder `av1` duy nhất còn lại trong
+FFmpeg 5.1 là loại chỉ chạy được khi có hardware acceleration — thứ không tồn tại trong wasm.
+Nói cách khác ffmpeg trong extension này về nguyên tắc không giải mã nổi AV1, không phải lỗi tham số.
+
+Chrome thì ngược lại: nó giải mã AV1 và VP9 bằng phần mềm, đồng thời encode H.264 có tăng tốc
+phần cứng. Nên đường chuyển mã nay đi qua WebCodecs:
+
+```
+MP4 (AV1/VP9)  →  mp4box demux  →  VideoDecoder  →  VideoEncoder (H.264 Annex-B)
+                                                          ↓
+                              ffmpeg chỉ còn việc ghép H.264 + AAC vào MP4 (-c copy)
+```
+
+Kết quả: chuyển mã 1080p thường xong dưới một phút thay vì 5–20 phút, và AV1 chạy được.
+`libx264` vẫn giữ làm phương án dự phòng cho VP9 nếu WebCodecs lỗi; riêng AV1 thì không có
+dự phòng nên extension báo rõ và gợi ý hai lối khác thay vì thất bại im lặng.
+
+Thêm `vendor/mp4box/` (~160 KB) để demux MP4 lấy frame kèm `av1C`/`avcC` cho WebCodecs.

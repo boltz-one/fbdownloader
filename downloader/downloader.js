@@ -1,4 +1,5 @@
 import { FFmpeg } from '../vendor/ffmpeg/index.js';
+import { transcodeToH264 } from './transcode.js';
 
 const $ = (s) => document.querySelector(s);
 const params = new URLSearchParams(location.search);
@@ -292,8 +293,9 @@ async function init() {
       const hint = document.createElement('p');
       hint.style.margin = '0 0 9px';
       hint.textContent = 'Video này Facebook chỉ phát DASH bằng ' + c.name + ', không có bản H.264 nào. ' +
-        'Hai lựa chọn: chuyển mã tại đây (giữ nguyên độ phân giải, mất vài phút), ' +
-        'hoặc đóng tab này và bấm nút HD trong popup — bản progressive của Facebook là H.264, tải một phát là xong.';
+        'Chuyển mã ngay tại đây thì giữ nguyên độ phân giải và thường xong dưới một phút vì Chrome ' +
+        'làm việc đó chứ không phải ffmpeg. Hoặc đóng tab này rồi bấm nút HD trong popup — bản ' +
+        'progressive của Facebook là H.264, tải một phát là xong nhưng độ phân giải thấp hơn.';
       el.appendChild(hint);
     }
     const b = document.createElement('button');
@@ -337,12 +339,42 @@ async function run() {
       log('Không có luồng tiếng riêng — bỏ qua bước ghép.');
     }
 
-    const label = resLabel(v) + '-' + (mode === 'h264' ? 'H264' : codecOf(v).name.replace(/\./g, ''));
+    const wantH264 = mode === 'h264' && codecOf(v).compat < 2;
+    const label = resLabel(v) + '-' + (wantH264 ? 'H264' : codecOf(v).name.replace(/\./g, ''));
 
-    if (!a) {
+    /* ---- optional transcode, done by Chrome rather than by ffmpeg ---- */
+    let rawH264 = null, h264fps = 0;
+    if (wantH264) {
+      $('#s-mux .lbl').textContent = 'Chuyển mã';
+      try {
+        log(`Chuyển ${codecOf(v).name} → H.264 bằng WebCodecs của Chrome.`);
+        const r = await transcodeToH264(videoBuf, {
+          onProgress: (pct) => setStep('#s-mux', pct * 0.9),
+          onLog: log,
+        });
+        rawH264 = r.data;
+        h264fps = r.fps;
+        log(`Chuyển mã xong: ${r.frames} frame, ${fmtBytes(r.data.length)}.`);
+        $('#s-mux .lbl').textContent = 'Ghép MP4';
+      } catch (e) {
+        const msg = e && e.message ? e.message : String(e);
+        log('WebCodecs không chạy được: ' + msg);
+        if (codecOf(v).name === 'AV1') {
+          throw new Error(
+            'Không chuyển mã được AV1. WebCodecs thất bại, và bản ffmpeg đóng gói trong extension ' +
+            'không có bộ giải mã AV1 phần mềm (thiếu libdav1d/libaom) nên cũng không thay thế được. ' +
+            'Hãy chọn "Giữ nguyên codec" rồi xem bằng VLC hoặc Chrome, hoặc dùng nút HD trong popup — ' +
+            'bản progressive của Facebook là H.264.');
+        }
+        log('Quay về phương án ffmpeg libx264 — chậm hơn nhiều, cứ để tab mở.');
+      }
+    }
+
+    /* ---- nothing left for ffmpeg to do ---- */
+    if (!a && !rawH264 && !wantH264) {
       saveBlob(new Blob([videoBuf], { type: 'video/mp4' }), await suggestName(label, 'mp4'));
       setStep('#s-mux', 100, true);
-      $('#work').hidden = false; $('#done').hidden = false;
+      $('#done').hidden = false;
       return;
     }
 
@@ -362,20 +394,28 @@ async function run() {
       classWorkerURL: chrome.runtime.getURL('vendor/ffmpeg/worker.js'),
     });
 
-    await ffmpeg.writeFile('v.mp4', videoBuf);
-    await ffmpeg.writeFile('a.mp4', audioBuf);
+    if (a) await ffmpeg.writeFile('a.mp4', audioBuf);
 
-    const transcode = mode === 'h264' && codecOf(v).compat < 2;
-    const args = transcode
-      ? ['-i', 'v.mp4', '-i', 'a.mp4',
-         '-c:v', 'libx264', '-preset', 'superfast', '-crf', '22', '-pix_fmt', 'yuv420p',
-         '-c:a', 'copy', '-movflags', '+faststart', '-y', 'out.mp4']
-      : ['-i', 'v.mp4', '-i', 'a.mp4', '-c', 'copy', '-movflags', '+faststart', '-y', 'out.mp4'];
-    if (transcode) {
-      $('#s-mux .lbl').textContent = 'Chuyển mã';
-      log(`Chuyển ${codecOf(v).name} → H.264. Việc này chạy trong trình duyệt nên chậm — ` +
-          `1080p dài vài phút thì mất khoảng 5–20 phút. Cứ để tab mở.`);
+    let args;
+    if (rawH264) {
+      // Already H.264 — ffmpeg only has to wrap it and attach the audio.
+      await ffmpeg.writeFile('v.h264', rawH264);
+      args = ['-r', String(h264fps), '-i', 'v.h264'];
+      if (a) args.push('-i', 'a.mp4');
+      args.push('-c', 'copy', '-movflags', '+faststart', '-y', 'out.mp4');
+    } else {
+      await ffmpeg.writeFile('v.mp4', videoBuf);
+      args = ['-i', 'v.mp4'];
+      if (a) args.push('-i', 'a.mp4');
+      if (wantH264) {
+        args.push('-c:v', 'libx264', '-preset', 'superfast', '-crf', '22', '-pix_fmt', 'yuv420p');
+        if (a) args.push('-c:a', 'copy');
+      } else {
+        args.push('-c', 'copy');
+      }
+      args.push('-movflags', '+faststart', '-y', 'out.mp4');
     }
+
     await ffmpeg.exec(args);
     const out = await ffmpeg.readFile('out.mp4');
     if (!out || !out.length) throw new Error('ffmpeg không tạo được file kết quả.');

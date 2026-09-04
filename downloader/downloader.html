@@ -23,7 +23,7 @@
       <label for="msel">Xử lý</label>
       <select id="msel">
         <option value="copy">Giữ nguyên codec — ghép thẳng, xong trong vài giây</option>
-        <option value="h264">Chuyển sang H.264 — mở được ở mọi trình phát, mất vài phút</option>
+        <option value="h264">Chuyển sang H.264 — mở được ở mọi trình phát (Chrome chuyển mã, thường dưới 1 phút)</option>
       </select>
     </div>
     <p class="warn" id="codecWarn" hidden></p>
@@ -52,6 +52,7 @@
     </div>
   </section>
 </main>
+<script src="../vendor/mp4box/mp4box.all.min.js"></script>
 <script type="module" src="downloader.js"></script>
 </body>
 </html>
